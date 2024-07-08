@@ -1,6 +1,4 @@
-package dev.rdh.fastnbt.forge;
-
-import dev.rdh.fastnbt.FastNBT;
+package dev.rdh.fastnbt;
 
 import net.neoforged.fml.common.Mod;
 

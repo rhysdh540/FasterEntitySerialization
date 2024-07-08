@@ -12,4 +12,9 @@ pluginManagement {
     }
 }
 
+plugins {
+    id("xyz.wagyourtail.unimined") version("1.2.14") apply(false)
+    id("com.github.johnrengelman.shadow") version("8.1.1") apply(false)
+}
+
 rootProject.name = "fastnbt"

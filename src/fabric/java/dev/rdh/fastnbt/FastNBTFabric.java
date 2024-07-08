@@ -1,8 +1,6 @@
-package dev.rdh.fastnbt.fabric;
+package dev.rdh.fastnbt;
 
 import net.fabricmc.api.ModInitializer;
-
-import dev.rdh.fastnbt.FastNBT;
 
 public final class FastNBTFabric implements ModInitializer {
 	@Override
