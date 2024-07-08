@@ -1,0 +1,102 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'xyz.wagyourtail.unimined' version '1.2.14'
+}
+
+group 'dev.rdh'
+version '0.1'
+
+base {
+    archivesName = "fastnbt"
+}
+
+idea {
+    module {
+        downloadSources = true
+    }
+}
+
+sourceSets {
+    fabric
+    forge
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "sponge"
+        url = "https://repo.spongepowered.org/maven"
+    }
+}
+
+def accessWidenerPath = "src/main/resources/fastnbt.aw"
+
+unimined.minecraft {
+    version = project.minecraft_version
+
+    mappings {
+        intermediary()
+        mojmap()
+        parchment(minecraft_version, parchment_version)
+
+        devFallbackNamespace "intermediary"
+    }
+
+    accessWidener {
+        accessWidener(accessWidenerPath)
+    }
+
+    defaultRemapJar = false
+}
+
+unimined.minecraft(sourceSets.fabric) {
+    combineWith(sourceSets.main)
+
+    fabric {
+        loader project.fabric_version
+        accessWidener(accessWidenerPath)
+    }
+
+    defaultRemapJar = true
+}
+
+unimined.minecraft(sourceSets.forge) {
+    combineWith(sourceSets.main)
+
+    neoForge {
+        loader project.forge_version
+        mixinConfig "fastnbt.mixins.json"
+        accessTransformer(aw2at(accessWidenerPath))
+    }
+
+    defaultRemapJar = true
+}
+
+dependencies {
+    // we need this in main where it isn't by default
+    implementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
+    implementation("io.github.llamalad7:mixinextras-common:0.3.5")
+
+    fabricModImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}+${project.minecraft_version}"
+}
+
+tasks.jar {
+    enabled = false
+}
+
+tasks.processFabricResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.processForgeResources {
+    inputs.property "version", project.version
+
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}

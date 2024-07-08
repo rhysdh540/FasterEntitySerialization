@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "fastnbt",
+  "version": "${version}",
+
+  "name": "FastNBT",
+  "description": "",
+  "authors": [ "rdh" ],
+  "contact": {
+    "sources": ""
+  },
+
+  "license": "MIT",
+  "icon": "icon.png",
+
+  "environment": "server",
+  "entrypoints": {
+    "server": [ "dev.rdh.fastnbt.fabric.FastNBTFabric" ]
+  },
+  "mixins": [ "fastnbt.mixins.json" ],
+
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=${minecraft_version}"
+  }
+}

@@ -1,0 +1,20 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+issueTrackerURL="" # TODO
+license = "MIT" # TODO add file
+
+[[mods]]
+modId = "fastnbt"
+version = "${version}"
+displayName = "FastNBT"
+authors = "rdh"
+description = '''
+
+'''
+
+[[dependencies.fastnbt]]
+modId="minecraft"
+mandatory=true
+versionRange="[${minecraft_version})"
+ordering="NONE"
+side="BOTH"
