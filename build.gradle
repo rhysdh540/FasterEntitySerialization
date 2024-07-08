@@ -11,6 +11,12 @@ base {
     archivesName = "fastnbt"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 idea {
     module {
         downloadSources = true
@@ -24,9 +30,11 @@ sourceSets {
 
 repositories {
     mavenCentral()
-    maven {
-        name = "sponge"
-        url = "https://repo.spongepowered.org/maven"
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "net.fabricmc:sponge-mixin:${project.mixin_version}"
     }
 }
 
@@ -47,6 +55,7 @@ unimined.minecraft {
         accessWidener(accessWidenerPath)
     }
 
+    runs.off = true
     defaultRemapJar = false
 }
 
@@ -58,6 +67,7 @@ unimined.minecraft(sourceSets.fabric) {
         accessWidener(accessWidenerPath)
     }
 
+    runs.off = false
     defaultRemapJar = true
 }
 
@@ -70,12 +80,13 @@ unimined.minecraft(sourceSets.forge) {
         accessTransformer(aw2at(accessWidenerPath))
     }
 
+    runs.off = false
     defaultRemapJar = true
 }
 
 dependencies {
     // we need this in main where it isn't by default
-    implementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
+    implementation "net.fabricmc:sponge-mixin:${project.mixin_version}"
     implementation("io.github.llamalad7:mixinextras-common:0.3.5")
 
     fabricModImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}+${project.minecraft_version}"
@@ -85,18 +96,23 @@ tasks.jar {
     enabled = false
 }
 
+def replaceProperties = [
+        "version": project.version,
+        "minecraft_version": project.minecraft_version,
+]
+
 tasks.processFabricResources {
-    inputs.property "version", project.version
+    inputs.properties replaceProperties
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version
+        expand replaceProperties
     }
 }
 
 tasks.processForgeResources {
-    inputs.property "version", project.version
+    inputs.properties replaceProperties
 
     filesMatching("META-INF/mods.toml") {
-        expand "version": project.version
+        expand replaceProperties
     }
 }

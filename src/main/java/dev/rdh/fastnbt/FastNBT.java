@@ -33,12 +33,8 @@ public abstract class FastNBT {
 
 	public static void init() {
 		register("Pos", entity -> {
-			Entity vehicle = entity.getVehicle();
-			if(vehicle != null) {
-				return newDoubleList(vehicle.getX(), vehicle.getY(), vehicle.getZ());
-			} else {
-				return newDoubleList(entity.getX(), entity.getY(), entity.getZ());
-			}
+			Entity toSave = entity.getVehicle() == null ? entity : entity.getVehicle();
+			return newDoubleList(toSave.getX(), toSave.getY(), toSave.getZ());
 		});
 		register("Motion", entity -> {
 			Vec3 motion = entity.getDeltaMovement();

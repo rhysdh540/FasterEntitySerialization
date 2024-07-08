@@ -29,6 +29,7 @@ public abstract class EntitySelectorOptionsMixin {
 
 			for(String key : expected.getAllKeys()) {
 				if(!FastNBT.hasCustomConverter(key)) {
+					FastNBT.LOGGER.debug("No custom converter found for key '{}', saving all keys", key);
 					saveAll = true;
 					break;
 				}

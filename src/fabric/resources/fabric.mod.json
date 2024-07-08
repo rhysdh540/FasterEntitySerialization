@@ -13,9 +13,9 @@
   "license": "MIT",
   "icon": "icon.png",
 
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
-    "server": [ "dev.rdh.fastnbt.fabric.FastNBTFabric" ]
+    "main": [ "dev.rdh.fastnbt.fabric.FastNBTFabric" ]
   },
   "mixins": [ "fastnbt.mixins.json" ],
 
