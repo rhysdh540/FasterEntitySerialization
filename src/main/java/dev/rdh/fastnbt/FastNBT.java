@@ -1,23 +1,27 @@
 package dev.rdh.fastnbt;
 
-import com.ibm.icu.util.CodePointTrie.Fast;
-import com.mojang.serialization.DataResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.SharedConstants;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Component.Serializer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.warden.WardenSpawnTracker;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,18 +36,43 @@ public abstract class FastNBT {
 	public static void init() {
 		registerBaseEntityConverters();
 		registerLivingEntityConverters();
+		registerPlayerConverters();
+		registerServerPlayerConverters();
 	}
 
+	/**
+	 * @see net.minecraft.world.entity.Entity#saveWithoutId
+	 */
 	private static void registerBaseEntityConverters() {
 		register("Pos", entity -> {
 			Entity toSave = entity.getVehicle() == null ? entity : entity.getVehicle();
-			return newDoubleList(toSave.getX(), toSave.getY(), toSave.getZ());
+			return new ListTag(
+					List.of(
+							DoubleTag.valueOf(toSave.getX()),
+							DoubleTag.valueOf(toSave.getY()),
+							DoubleTag.valueOf(toSave.getZ())
+					),
+					(byte) 0
+			);
 		});
 		register("Motion", entity -> {
 			Vec3 motion = entity.getDeltaMovement();
-			return newDoubleList(motion.x, motion.y, motion.z);
+			return new ListTag(
+					List.of(
+							DoubleTag.valueOf(motion.x),
+							DoubleTag.valueOf(motion.y),
+							DoubleTag.valueOf(motion.z)
+					),
+					(byte) 0
+			);
 		});
-		register("Rotation", entity -> newFloatList(entity.getYRot(), entity.getXRot()));
+		register("Rotation", entity -> new ListTag(
+				List.of(
+						FloatTag.valueOf(entity.getYRot()),
+						FloatTag.valueOf(entity.getXRot())
+				),
+				(byte) 0
+		));
 		register("FallDistance", entity -> DoubleTag.valueOf(entity.fallDistance));
 		register("Fire", entity -> ShortTag.valueOf((short) entity.getRemainingFireTicks()));
 		register("Air", entity -> ShortTag.valueOf((short) entity.getAirSupply()));
@@ -96,6 +125,9 @@ public abstract class FastNBT {
 		});
 	}
 
+	/**
+	 * @see net.minecraft.world.entity.LivingEntity#addAdditionalSaveData
+	 */
 	private static void registerLivingEntityConverters() {
 		register("Health", LivingEntity.class, entity -> FloatTag.valueOf(entity.getHealth()));
 		register("HurtTime", LivingEntity.class, entity -> ShortTag.valueOf((short) entity.hurtTime));
@@ -128,6 +160,90 @@ public abstract class FastNBT {
 		});
 	}
 
+	/**
+	 * @see net.minecraft.world.entity.player.Player#addAdditionalSaveData
+	 */
+	private static void registerPlayerConverters() {
+		register("DataVersion", Player.class, entity -> // why is this in Player?
+				IntTag.valueOf(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
+		register("Inventory", Player.class, entity -> entity.getInventory().save(new ListTag()));
+		register("SelectedItemSlot", Player.class, entity -> IntTag.valueOf(entity.getInventory().selected));
+		register("SleepTimer", Player.class, entity -> ShortTag.valueOf((short) entity.getSleepTimer()));
+		register("XpP", Player.class, entity -> FloatTag.valueOf(entity.experienceProgress));
+		register("XpLevel", Player.class, entity -> IntTag.valueOf(entity.experienceLevel));
+		register("XpTotal", Player.class, entity -> IntTag.valueOf(entity.totalExperience));
+		register("XpSeed", Player.class, entity -> LongTag.valueOf(entity.getEnchantmentSeed()));
+		register("Score", Player.class, entity -> IntTag.valueOf(entity.getScore()));
+
+		// food data
+		register("foodLevel", Player.class, entity -> IntTag.valueOf(entity.getFoodData().getFoodLevel()));
+		register("foodTickTimer", Player.class, entity -> IntTag.valueOf(entity.getFoodData().tickTimer));
+		register("foodSaturationLevel", Player.class, entity -> FloatTag.valueOf(entity.getFoodData().getSaturationLevel()));
+		register("foodExhaustionLevel", Player.class, entity -> FloatTag.valueOf(entity.getFoodData().getExhaustionLevel()));
+
+		register("abilities", Player.class, entity -> {
+			CompoundTag tag = new CompoundTag();
+			entity.getAbilities().addSaveData(tag);
+			return tag.get("abilities");
+		});
+		register("EnderItems", Player.class, entity -> entity.getEnderChestInventory().createTag());
+		register("ShoulderEntityLeft", Player.class, entity -> entity.getShoulderEntityLeft().isEmpty() ? null : entity.getShoulderEntityLeft());
+		register("ShoulderEntityRight", Player.class, entity -> entity.getShoulderEntityRight().isEmpty() ? null : entity.getShoulderEntityRight());
+		register("LastDeathLocation", Player.class, entity -> entity.getLastDeathLocation()
+				.flatMap(arg -> GlobalPos.CODEC.encodeStart(NbtOps.INSTANCE, arg).resultOrPartial(LOGGER::error))
+				.orElse(null)
+		);
+	}
+
+	/**
+	 * @see net.minecraft.server.level.ServerPlayer#addAdditionalSaveData
+	 */
+	public static void registerServerPlayerConverters() {
+		register("warden_spawn_tracker", ServerPlayer.class, entity ->
+				entity.getWardenSpawnTracker().flatMap(spawnTracker ->
+						WardenSpawnTracker.CODEC.encodeStart(NbtOps.INSTANCE, spawnTracker)
+								.resultOrPartial(LOGGER::error)
+				).orElse(null));
+		register("playerGameType", ServerPlayer.class, entity -> IntTag.valueOf(entity.gameMode.getGameModeForPlayer().getId()));
+		register("previousPlayerGameType", ServerPlayer.class, entity -> {
+			var gameMode = entity.gameMode.getPreviousGameModeForPlayer();
+			return gameMode == null ? null : IntTag.valueOf(gameMode.getId());
+		});
+		register("seenCredits", ServerPlayer.class, entity -> ByteTag.valueOf(entity.seenCredits));
+		register("enteredNetherPosition", ServerPlayer.class, entity -> {
+			if(entity.enteredNetherPosition == null) return null;
+			CompoundTag tag = new CompoundTag();
+			tag.put("x", DoubleTag.valueOf(entity.enteredNetherPosition.x));
+			tag.put("y", DoubleTag.valueOf(entity.enteredNetherPosition.y));
+			tag.put("z", DoubleTag.valueOf(entity.enteredNetherPosition.z));
+			return tag;
+		});
+		register("RootVehicle", ServerPlayer.class, entity -> {
+			Entity rootVehicle = entity.getRootVehicle();
+			Entity vehicle = entity.getVehicle();
+			if (vehicle != null && rootVehicle != entity && rootVehicle.hasExactlyOnePlayerPassenger()) {
+				CompoundTag tag = new CompoundTag();
+				CompoundTag entityTag = new CompoundTag();
+				rootVehicle.save(entityTag);
+				tag.putUUID("Attach", vehicle.getUUID());
+				tag.put("Entity", entityTag);
+				return tag;
+			}
+			return null;
+		});
+		register("recipeBook", ServerPlayer.class, entity -> entity.getRecipeBook().toNbt());
+		register("Dimension", ServerPlayer.class, entity -> StringTag.valueOf(entity.level().dimension().location().toString()));
+		register("SpawnX", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : IntTag.valueOf(entity.getRespawnPosition().getX()));
+		register("SpawnY", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : IntTag.valueOf(entity.getRespawnPosition().getY()));
+		register("SpawnZ", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : IntTag.valueOf(entity.getRespawnPosition().getZ()));
+		register("SpawnForced", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : ByteTag.valueOf(entity.isRespawnForced()));
+		register("SpawnAngle", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : FloatTag.valueOf(entity.getRespawnAngle()));
+		register("SpawnDimension", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : ResourceLocation.CODEC
+				.encodeStart(NbtOps.INSTANCE, entity.getRespawnDimension().location())
+				.resultOrPartial(LOGGER::error)
+				.orElse(null));
+	}
+
 	public static void register(String id, Function<Entity, @Nullable Tag> converter) {
 		ENTITY_NBT.put(id, converter);
 	}
@@ -142,22 +258,6 @@ public abstract class FastNBT {
 
 	public static @Nullable Tag get(String id, Entity entity) {
 		return ENTITY_NBT.get(id).apply(entity);
-	}
-
-	private static ListTag newDoubleList(double... values) {
-		ListTag list = new ListTag();
-		for(double value : values) {
-			list.add(DoubleTag.valueOf(value));
-		}
-		return list;
-	}
-
-	private static ListTag newFloatList(float... values) {
-		ListTag list = new ListTag();
-		for(float value : values) {
-			list.add(DoubleTag.valueOf(value));
-		}
-		return list;
 	}
 
 	private FastNBT() {
