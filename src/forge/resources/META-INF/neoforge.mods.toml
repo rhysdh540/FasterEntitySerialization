@@ -4,15 +4,15 @@ issueTrackerURL="" # TODO
 license = "MIT"
 
 [[mods]]
-modId = "fastnbt"
+modId = "fes"
 version = "${version}"
-displayName = "FastNBT"
+displayName = "FasterEntitySerialization"
 authors = "rdh"
 description = '''
 
 '''
 
-[[dependencies.fastnbt]]
+[[dependencies.fes]]
 modId="minecraft"
 mandatory=true
 versionRange="[${minecraft_version})"

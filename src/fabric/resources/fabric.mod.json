@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "fastnbt",
+  "id": "fes",
   "version": "${version}",
 
-  "name": "FastNBT",
+  "name": "FasterEntitySerialization",
   "description": "",
   "authors": [ "rdh" ],
   "contact": {
@@ -15,9 +15,9 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": ["dev.rdh.fastnbt.FastNBTFabric"]
+    "main": ["dev.rdh.fes.FabricFES"]
   },
-  "mixins": [ "fastnbt.mixins.json" ],
+  "mixins": ["fes.mixins.json"],
 
   "depends": {
     "fabricloader": ">=0.15.0",

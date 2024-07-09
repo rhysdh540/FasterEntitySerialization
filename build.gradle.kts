@@ -17,7 +17,7 @@ group = "dev.rdh"
 version = "0.1"
 
 base {
-    archivesName = "fastnbt"
+    archivesName = "fes"
 }
 
 java {
@@ -47,7 +47,7 @@ configurations.all {
     }
 }
 
-val accessWidenerPath = "src/main/resources/fastnbt.aw"
+val accessWidenerPath = "src/main/resources/fes.aw"
 
 unimined.minecraft {
     version = "minecraft_version"()
@@ -85,7 +85,7 @@ unimined.minecraft(sourceSets["forge"]) {
 
     neoForge {
         loader("forge_version"())
-        mixinConfig("fastnbt.mixins.json")
+        mixinConfig("fes.mixins.json")
         accessTransformer(aw2at(accessWidenerPath))
     }
 
@@ -148,14 +148,14 @@ fun setupShadow(platform: String) {
 
         configurations = emptyList()
         from(zipTree(remapJar.get().archiveFile)) {
-            rename { if(it == "fastnbt.mixins.json") "fastnbt-$platform.mixins.json" else it }
+            rename { if(it == "fes.mixins.json") "fes-$platform.mixins.json" else it }
             includeEmptyDirs = false
         }
 
         archiveClassifier.set(preShadowTaskName)
         destinationDirectory = temporaryDir
 
-        relocate("dev.rdh.fastnbt", "dev.rdh.fastnbt.$platform")
+        relocate("dev.rdh.fes", "dev.rdh.fes.$platform")
     }
 }
 
@@ -166,11 +166,11 @@ tasks.jar {
     this.clearSourcePaths()
     dependsOn("fabricPreShadow", "forgePreShadow")
 
-    val oldMixinConfig = "fastnbt.mixins.json"
-    fun newMixinConfig(platform: String) = "fastnbt-$platform.mixins.json"
+    val oldMixinConfig = "fes.mixins.json"
+    fun newMixinConfig(platform: String) = "fes-$platform.mixins.json"
 
-    val oldMixinPackage = "dev.rdh.fastnbt.mixin"
-    fun newMixinPackage(platform: String) = "dev.rdh.fastnbt.$platform.mixin"
+    val oldMixinPackage = "dev.rdh.fes.mixin"
+    fun newMixinPackage(platform: String) = "dev.rdh.fes.$platform.mixin"
 
     from(zipTree((tasks["fabricPreShadow"] as ShadowJar).archiveFile)) {
         includeEmptyDirs = false

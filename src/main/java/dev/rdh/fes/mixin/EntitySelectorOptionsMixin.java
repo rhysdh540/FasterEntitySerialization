@@ -1,11 +1,11 @@
-package dev.rdh.fastnbt.mixin;
+package dev.rdh.fes.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-import dev.rdh.fastnbt.FastNBT;
+import dev.rdh.fes.FasterEntitySerialization;
 
 import net.minecraft.commands.arguments.selector.options.EntitySelectorOptions;
 import net.minecraft.nbt.CompoundTag;
@@ -21,7 +21,7 @@ public abstract class EntitySelectorOptionsMixin {
 			value = "INVOKE",
 			target = "Lnet/minecraft/commands/arguments/selector/EntitySelectorParser;addPredicate(Ljava/util/function/Predicate;)V"
 	))
-	private static Predicate<Entity> fastnbt$dontSerializeTheWholeEntity(final Predicate<Entity> original,
+	private static Predicate<Entity> fes$dontSerializeTheWholeEntity(final Predicate<Entity> original,
 																		 final @Local CompoundTag expected,
 																		 final @Local boolean invert) {
 		return entity -> {
@@ -29,13 +29,13 @@ public abstract class EntitySelectorOptionsMixin {
 			boolean vanilla = false;
 
 			for(String key : expected.getAllKeys()) {
-				if(!FastNBT.hasCustomConverter(key)) {
-					FastNBT.LOGGER.debug("No custom converter found for key '{}', saving all keys", key);
+				if(!FasterEntitySerialization.hasCustomConverter(key)) {
+					FasterEntitySerialization.LOGGER.debug("No custom converter found for key '{}', saving all keys", key);
 					vanilla = true;
 					break;
 				}
 
-				Tag tag = FastNBT.get(key, entity);
+				Tag tag = FasterEntitySerialization.get(key, entity);
 				if(tag != null) {
 					found.put(key, tag);
 				}

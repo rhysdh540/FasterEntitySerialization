@@ -1,4 +1,4 @@
-package dev.rdh.fastnbt;
+package dev.rdh.fes;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
@@ -27,8 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-public abstract class FastNBT {
-	public static final String ID = "fastnbt";
+public abstract class FasterEntitySerialization {
+	public static final String ID = "fes";
 	public static final Logger LOGGER = LogManager.getLogger(ID);
 
 	private static final Map<String, Function<Entity, @Nullable Tag>> CONVERTERS = new Object2ObjectOpenHashMap<>();
@@ -289,6 +289,6 @@ public abstract class FastNBT {
 		return CONVERTERS.get(id).apply(entity);
 	}
 
-	private FastNBT() {
+	private FasterEntitySerialization() {
 	}
 }
