@@ -33,7 +33,7 @@ group = "dev.rdh"
 version = "0.1"
 
 base {
-    archivesName = "fastentityserialization"
+    archivesName = "fasterentityserialization"
 }
 
 java {
