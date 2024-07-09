@@ -2,6 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.internal.file.copy.DefaultCopySpec
 import xyz.wagyourtail.unimined.api.minecraft.task.RemapJarTask
 import xyz.wagyourtail.unimined.util.capitalized
+import xyz.wagyourtail.unimined.util.getField
 
 plugins {
     id("java")
@@ -119,6 +120,19 @@ tasks.withType<RemapJarTask> {
     }
 }
 
+tasks.withType<AbstractArchiveTask> {
+    isReproducibleFileOrder = true
+    isPreserveFileTimestamps = false
+}
+
+tasks.named<AbstractArchiveTask>("forgeJar") {
+    destinationDirectory = layout.buildDirectory.dir("devlibs")
+    exclude("*.aw")
+}
+tasks.named<AbstractArchiveTask>("fabricJar") {
+    destinationDirectory = layout.buildDirectory.dir("devlibs")
+}
+
 fun setupShadow(platform: String) {
     val platformCapitalized = platform.capitalized()
 
@@ -135,6 +149,7 @@ fun setupShadow(platform: String) {
         configurations = emptyList()
         from(zipTree(remapJar.get().archiveFile)) {
             rename { if(it == "fastnbt.mixins.json") "fastnbt-$platform.mixins.json" else it }
+            includeEmptyDirs = false
         }
 
         archiveClassifier.set(preShadowTaskName)
@@ -158,6 +173,7 @@ tasks.jar {
     fun newMixinPackage(platform: String) = "dev.rdh.fastnbt.$platform.mixin"
 
     from(zipTree((tasks["fabricPreShadow"] as ShadowJar).archiveFile)) {
+        includeEmptyDirs = false
         val newMixinConfig = newMixinConfig("fabric")
         val newMixinPackage = newMixinPackage("fabric")
 
@@ -170,21 +186,24 @@ tasks.jar {
     }
 
     from(zipTree((tasks["forgePreShadow"] as ShadowJar).archiveFile)) {
-        exclude("*.aw")
-
+        includeEmptyDirs = false
         filesMatching(newMixinConfig("forge")) {
             filter { it.replace(oldMixinPackage, newMixinPackage("forge")) }
         }
     }
 
     archiveClassifier = ""
+
+    manifest {
+        attributes["MixinConfigs"] = newMixinConfig("forge")
+    }
 }
 
 fun Jar.clearSourcePaths() {
-    val mainSpecField = AbstractCopyTask::class.java.getDeclaredField("mainSpec")
-    mainSpecField.isAccessible = true
-    val mainSpec = mainSpecField.get(this) as DefaultCopySpec
-    mainSpecField.isAccessible = false
-
-    mainSpec.sourcePaths.clear()
+    AbstractCopyTask::class.java.getDeclaredField("mainSpec").let {
+        it.isAccessible = true
+        val thing = it.get(this) as DefaultCopySpec
+        thing.sourcePaths.clear()
+        it.isAccessible = false
+    }
 }

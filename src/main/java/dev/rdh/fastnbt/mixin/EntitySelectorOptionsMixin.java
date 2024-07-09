@@ -24,13 +24,12 @@ public abstract class EntitySelectorOptionsMixin {
 		return entity -> {
 			CompoundTag found = new CompoundTag();
 
-			// if we found a key that doesn't have a custom converter, we need to revert to vanilla behavior and save all keys
-			boolean saveAll = false;
+			boolean vanilla = false;
 
 			for(String key : expected.getAllKeys()) {
 				if(!FastNBT.hasCustomConverter(key)) {
 					FastNBT.LOGGER.debug("No custom converter found for key '{}', saving all keys", key);
-					saveAll = true;
+					vanilla = true;
 					break;
 				}
 
@@ -40,15 +39,8 @@ public abstract class EntitySelectorOptionsMixin {
 				}
 			}
 
-			if(saveAll) {
-				// vanilla behavior
-				found = entity.saveWithoutId(new CompoundTag());
-				if (entity instanceof ServerPlayer p) {
-					ItemStack held = p.getInventory().getSelected();
-					if (!held.isEmpty()) {
-						found.put("SelectedItem", held.save(new CompoundTag()));
-					}
-				}
+			if(vanilla) {
+				return predicate.test(entity);
 			}
 
 			return NbtUtils.compareNbt(expected, found, true) != invert;

@@ -32,6 +32,10 @@ public abstract class FastNBT {
 	private static final Map<String, Function<Entity, @Nullable Tag>> ENTITY_NBT = new HashMap<>();
 
 	public static void init() {
+		registerBaseEntityConverters();
+	}
+
+	private static void registerBaseEntityConverters() {
 		register("Pos", entity -> {
 			Entity toSave = entity.getVehicle() == null ? entity : entity.getVehicle();
 			return newDoubleList(toSave.getX(), toSave.getY(), toSave.getZ());
