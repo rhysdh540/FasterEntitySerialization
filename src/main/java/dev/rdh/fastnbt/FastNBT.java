@@ -1,27 +1,25 @@
 package dev.rdh.fastnbt;
 
+import com.ibm.icu.util.CodePointTrie.Fast;
+import com.mojang.serialization.DataResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.ShortTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Component.Serializer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -33,6 +31,7 @@ public abstract class FastNBT {
 
 	public static void init() {
 		registerBaseEntityConverters();
+		registerLivingEntityConverters();
 	}
 
 	private static void registerBaseEntityConverters() {
@@ -97,8 +96,44 @@ public abstract class FastNBT {
 		});
 	}
 
-	public static void register(String id, Function<Entity, @Nullable Tag> nbt) {
-		ENTITY_NBT.put(id, nbt);
+	private static void registerLivingEntityConverters() {
+		register("Health", LivingEntity.class, entity -> FloatTag.valueOf(entity.getHealth()));
+		register("HurtTime", LivingEntity.class, entity -> ShortTag.valueOf((short) entity.hurtTime));
+		register("HurtByTimestamp", LivingEntity.class, entity -> IntTag.valueOf(entity.getLastHurtByMobTimestamp()));
+		register("DeathTime", LivingEntity.class, entity -> ShortTag.valueOf((short) entity.deathTime));
+		register("AbsorptionAmount", LivingEntity.class, entity -> FloatTag.valueOf(entity.getAbsorptionAmount()));
+		register("Attributes", LivingEntity.class, entity -> entity.getAttributes().save());
+		register("active_effects", LivingEntity.class, entity -> {
+			Collection<MobEffectInstance> effects = entity.getActiveEffects();
+			if(effects.isEmpty()) return null;
+
+			ListTag list = new ListTag();
+
+			for(MobEffectInstance effect : effects) {
+				list.add(effect.save(new CompoundTag()));
+			}
+
+			return list;
+		});
+		register("FallFlying", LivingEntity.class, entity -> ByteTag.valueOf(entity.isFallFlying()));
+		register("SleepingX", LivingEntity.class, entity -> entity.getSleepingPos()
+				.map(blockPos -> IntTag.valueOf(blockPos.getX())).orElse(null));
+		register("SleepingY", LivingEntity.class, entity -> entity.getSleepingPos()
+				.map(blockPos -> IntTag.valueOf(blockPos.getY())).orElse(null));
+		register("SleepingZ", LivingEntity.class, entity -> entity.getSleepingPos()
+				.map(blockPos -> IntTag.valueOf(blockPos.getZ())).orElse(null));
+		register("Brain", LivingEntity.class, entity -> {
+			Optional<Tag> dataResult = entity.getBrain().serializeStart(NbtOps.INSTANCE).resultOrPartial(LOGGER::error);
+			return dataResult.orElse(null);
+		});
+	}
+
+	public static void register(String id, Function<Entity, @Nullable Tag> converter) {
+		ENTITY_NBT.put(id, converter);
+	}
+
+	public static <E extends Entity> void register(String id, Class<E> clazz, Function<E, @Nullable Tag> converter) {
+		register(id, entity -> clazz.isInstance(entity) ? converter.apply(clazz.cast(entity)) : null);
 	}
 
 	public static boolean hasCustomConverter(String id) {

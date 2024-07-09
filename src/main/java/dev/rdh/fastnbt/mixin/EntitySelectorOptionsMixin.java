@@ -11,9 +11,7 @@ import net.minecraft.commands.arguments.selector.options.EntitySelectorOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Predicate;
 
