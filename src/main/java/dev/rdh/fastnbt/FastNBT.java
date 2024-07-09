@@ -1,5 +1,6 @@
 package dev.rdh.fastnbt;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public abstract class FastNBT {
 	public static final String ID = "fastnbt";
 	public static final Logger LOGGER = LogManager.getLogger(ID);
 
-	private static final Map<String, Function<Entity, @Nullable Tag>> ENTITY_NBT = new HashMap<>();
+	private static final Map<String, Function<Entity, @Nullable Tag>> CONVERTERS = new Object2ObjectOpenHashMap<>();
 
 	public static void init() {
 		registerBaseEntityConverters();
@@ -52,7 +52,7 @@ public abstract class FastNBT {
 							DoubleTag.valueOf(toSave.getY()),
 							DoubleTag.valueOf(toSave.getZ())
 					),
-					(byte) 0
+					DoubleTag.ZERO.getId()
 			);
 		});
 		register("Motion", entity -> {
@@ -63,7 +63,7 @@ public abstract class FastNBT {
 							DoubleTag.valueOf(motion.y),
 							DoubleTag.valueOf(motion.z)
 					),
-					(byte) 0
+					DoubleTag.ZERO.getId()
 			);
 		});
 		register("Rotation", entity -> new ListTag(
@@ -71,7 +71,7 @@ public abstract class FastNBT {
 						FloatTag.valueOf(entity.getYRot()),
 						FloatTag.valueOf(entity.getXRot())
 				),
-				(byte) 0
+				FloatTag.ZERO.getId()
 		));
 		register("FallDistance", entity -> DoubleTag.valueOf(entity.fallDistance));
 		register("Fire", entity -> ShortTag.valueOf((short) entity.getRemainingFireTicks()));
@@ -245,7 +245,7 @@ public abstract class FastNBT {
 	}
 
 	public static void register(String id, Function<Entity, @Nullable Tag> converter) {
-		ENTITY_NBT.put(id, converter);
+		CONVERTERS.put(id, converter);
 	}
 
 	public static <E extends Entity> void register(String id, Class<E> clazz, Function<E, @Nullable Tag> converter) {
@@ -253,11 +253,11 @@ public abstract class FastNBT {
 	}
 
 	public static boolean hasCustomConverter(String id) {
-		return ENTITY_NBT.containsKey(id);
+		return CONVERTERS.containsKey(id);
 	}
 
 	public static @Nullable Tag get(String id, Entity entity) {
-		return ENTITY_NBT.get(id).apply(entity);
+		return CONVERTERS.get(id).apply(entity);
 	}
 
 	private FastNBT() {
