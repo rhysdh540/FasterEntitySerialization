@@ -24,6 +24,7 @@ public abstract class EntitySelectorOptionsMixin {
 	private static Predicate<Entity> fes$dontSerializeTheWholeEntity(final Predicate<Entity> original,
 																		 final @Local CompoundTag expected,
 																		 final @Local boolean invert) {
+		if(FasterEntitySerialization.DISABLED) return original;
 		return entity -> {
 			CompoundTag found = new CompoundTag();
 			boolean vanilla = false;

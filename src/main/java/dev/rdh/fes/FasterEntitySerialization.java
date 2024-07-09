@@ -33,7 +33,15 @@ public abstract class FasterEntitySerialization {
 
 	private static final Map<String, Function<Entity, @Nullable Tag>> CONVERTERS = new Object2ObjectOpenHashMap<>();
 
+	public static final boolean DISABLED = Boolean.parseBoolean(System.getProperty("fes.disable", "false"));
+
 	public static void registerAll() {
+		if(DISABLED) {
+			LOGGER.info("FasterEntitySerialization is disabled. Skipping registration of custom converters.");
+			return;
+		} else {
+			LOGGER.info("FasterEntitySerialization is enabled. Registering custom converters.");
+		}
 		registerBaseEntityConverters();
 		registerLivingEntityConverters();
 		registerPlayerConverters();

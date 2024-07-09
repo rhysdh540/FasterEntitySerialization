@@ -84,6 +84,11 @@ unimined.minecraft {
         config("server") {
             enabled = false
         }
+
+        all {
+            jvmArgs("-XX:+UseShenandoahGC")
+            //systemProperty("fes.disable", "true")
+        }
         off = true
     }
     defaultRemapJar = false
