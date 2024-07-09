@@ -4,10 +4,11 @@
   "version": "${version}",
 
   "name": "FasterEntitySerialization",
-  "description": "",
+  "description": "Speeds up the serialization of entities by only converting necessary keys to NBT",
   "authors": [ "rdh" ],
   "contact": {
-    "sources": ""
+    "sources": "https://github.com/rhysdh540/FasterEntitySerialization",
+    "issues": "https://github.com/rhysdh540/FasterEntitySerialization/issues"
   },
 
   "license": "MIT",

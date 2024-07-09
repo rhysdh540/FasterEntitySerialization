@@ -1,6 +1,6 @@
 modLoader="javafml"
 loaderVersion="[47,)"
-issueTrackerURL="" # TODO
+issueTrackerURL="https://github.com/rhysdh540/FasterEntitySerialization/issues"
 license = "MIT"
 
 [[mods]]
@@ -8,9 +8,7 @@ modId = "fes"
 version = "${version}"
 displayName = "FasterEntitySerialization"
 authors = "rdh"
-description = '''
-
-'''
+description = "Speeds up the serialization of entities by only converting necessary keys to NBT"
 
 [[dependencies.fes]]
 modId="minecraft"
