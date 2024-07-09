@@ -1,7 +1,7 @@
 modLoader="javafml"
 loaderVersion="[47,)"
 issueTrackerURL="" # TODO
-license = "MIT" # TODO add file
+license = "MIT"
 
 [[mods]]
 modId = "fastnbt"

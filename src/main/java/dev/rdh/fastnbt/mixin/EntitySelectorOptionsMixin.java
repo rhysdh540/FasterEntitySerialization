@@ -17,11 +17,15 @@ import java.util.function.Predicate;
 
 @Mixin(EntitySelectorOptions.class)
 public abstract class EntitySelectorOptionsMixin {
-	@ModifyArg(method = "lambda$bootStrap$50", at = @At(value = "INVOKE", target = "Lnet/minecraft/commands/arguments/selector/EntitySelectorParser;addPredicate(Ljava/util/function/Predicate;)V"))
-	private static Predicate<Entity> a(final Predicate<Entity> predicate, final @Local CompoundTag expected, final @Local boolean invert) {
+	@ModifyArg(method = "lambda$bootStrap$50", at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/commands/arguments/selector/EntitySelectorParser;addPredicate(Ljava/util/function/Predicate;)V"
+	))
+	private static Predicate<Entity> fastnbt$dontSerializeTheWholeEntity(final Predicate<Entity> original,
+																		 final @Local CompoundTag expected,
+																		 final @Local boolean invert) {
 		return entity -> {
 			CompoundTag found = new CompoundTag();
-
 			boolean vanilla = false;
 
 			for(String key : expected.getAllKeys()) {
@@ -38,7 +42,7 @@ public abstract class EntitySelectorOptionsMixin {
 			}
 
 			if(vanilla) {
-				return predicate.test(entity);
+				return original.test(entity);
 			}
 
 			return NbtUtils.compareNbt(expected, found, true) != invert;

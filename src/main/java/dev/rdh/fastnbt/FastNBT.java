@@ -33,7 +33,7 @@ public abstract class FastNBT {
 
 	private static final Map<String, Function<Entity, @Nullable Tag>> CONVERTERS = new Object2ObjectOpenHashMap<>();
 
-	public static void init() {
+	public static void registerAll() {
 		registerBaseEntityConverters();
 		registerLivingEntityConverters();
 		registerPlayerConverters();
@@ -163,6 +163,7 @@ public abstract class FastNBT {
 	/**
 	 * @see net.minecraft.world.entity.player.Player#addAdditionalSaveData
 	 */
+	@SuppressWarnings("JavadocReference") // idk why it thinks addAdditionalSaveData is private
 	private static void registerPlayerConverters() {
 		register("DataVersion", Player.class, entity -> // why is this in Player?
 				IntTag.valueOf(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
@@ -232,6 +233,7 @@ public abstract class FastNBT {
 			return null;
 		});
 		register("recipeBook", ServerPlayer.class, entity -> entity.getRecipeBook().toNbt());
+		//noinspection resource
 		register("Dimension", ServerPlayer.class, entity -> StringTag.valueOf(entity.level().dimension().location().toString()));
 		register("SpawnX", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : IntTag.valueOf(entity.getRespawnPosition().getX()));
 		register("SpawnY", ServerPlayer.class, entity -> entity.getRespawnPosition() == null ? null : IntTag.valueOf(entity.getRespawnPosition().getY()));
@@ -244,19 +246,46 @@ public abstract class FastNBT {
 				.orElse(null));
 	}
 
+	/**
+	 * Registers a custom converter for the given id.
+	 * @param id The nbt key to register the converter for
+	 * @param converter A function that computes the relevant tag for the given entity
+	 */
 	public static void register(String id, Function<Entity, @Nullable Tag> converter) {
 		CONVERTERS.put(id, converter);
 	}
 
+	/**
+	 * Registers a custom converter for the given id. It will only be applied to entities that are instances of the given class.
+	 * @param id The nbt key to register the converter for
+	 * @param clazz The class that the entity must be an instance of
+	 * @param converter A function that computes the relevant tag for the given entity
+	 * @param <E> The type of entity that the converter is for
+	 */
 	public static <E extends Entity> void register(String id, Class<E> clazz, Function<E, @Nullable Tag> converter) {
 		register(id, entity -> clazz.isInstance(entity) ? converter.apply(clazz.cast(entity)) : null);
 	}
 
+	/**
+	 * Checks if a custom converter is registered for the given id.
+	 * @param id The nbt key to check for
+	 * @return true if a custom converter is registered for the given id, false otherwise
+	 */
 	public static boolean hasCustomConverter(String id) {
 		return CONVERTERS.containsKey(id);
 	}
 
+	/**
+	 * Gets the tag for the given id from the given entity.
+	 * @param id The nbt key to get the tag for
+	 * @param entity The entity to get the tag from
+	 * @return The tag for the given id, or null if no tag should be saved
+	 * @throws IllegalArgumentException if no custom converter is registered for the given id
+	 */
 	public static @Nullable Tag get(String id, Entity entity) {
+		if(!CONVERTERS.containsKey(id)) {
+			throw new IllegalArgumentException("No custom converter found for key '" + id + "'. Make sure to check with hasCustomConverter before calling get.");
+		}
 		return CONVERTERS.get(id).apply(entity);
 	}
 
