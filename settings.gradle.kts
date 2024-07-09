@@ -4,7 +4,7 @@ pluginManagement {
         maven("https://maven.neoforged.net/releases")
         maven("https://maven.fabricmc.net/")
         maven("https://maven.wagyourtail.xyz/releases")
-        gradlePluginPortal() {
+        gradlePluginPortal {
             content {
                 excludeGroup("org.apache.logging.log4j")
             }
@@ -21,7 +21,7 @@ buildscript {
 }
 
 plugins {
-    id("xyz.wagyourtail.unimined") version("1.2.14") apply(false)
+    id("xyz.wagyourtail.unimined") version("1.3.0") apply(false)
     id("com.github.johnrengelman.shadow") version("8.1.1") apply(false)
 }
 

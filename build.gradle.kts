@@ -33,7 +33,7 @@ group = "dev.rdh"
 version = "0.1"
 
 base {
-    archivesName = "fes"
+    archivesName = "fastentityserialization"
 }
 
 java {
@@ -80,7 +80,12 @@ unimined.minecraft {
         accessWidener(accessWidenerPath)
     }
 
-    runs.off = true
+    runs {
+        config("server") {
+            enabled = false
+        }
+        off = true
+    }
     defaultRemapJar = false
 }
 
@@ -226,7 +231,7 @@ fun Jar.clearSourcePaths() {
 
 val JAVA_HOME: String = System.getProperty("java.home") ?: error("java.home not set")
 
-tasks.register("squishJar") {
+val squishJar = tasks.register("squishJar") {
     dependsOn(tasks.jar)
     group = "build"
 
@@ -348,6 +353,10 @@ tasks.register("squishJar") {
             }
         }
     }
+}
+
+tasks.assemble {
+    dependsOn(squishJar)
 }
 
 private fun processClassFile(bytes: ByteArray): ByteArray {
